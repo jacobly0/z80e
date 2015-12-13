@@ -283,14 +283,16 @@ void hook_on_after_execution(hook_info_t *info, uint16_t address) {
 	}
 }
 
-void hook_on_breakpoint(hook_info_t *info, uint16_t address) {
+int hook_on_breakpoint(hook_info_t *info, uint16_t address) {
+	int result = 0;
 	int i = 0;
 	for (i = 0; i < info->on_breakpoint->capacity; i++) {
-		execution_hook_callback_t *cb = &info->on_breakpoint->callbacks[i];
+		breakpoint_hook_callback_t *cb = &info->on_breakpoint->callbacks[i];
 		if (cb->flags & IN_USE) {
-			cb->callback(cb->data, address);
+			result |= cb->callback(cb->data, address);
 		}
 	}
+	return result;
 }
 
 int hook_add_to_execution_array(hook_execution_array_t *hook, void *data, hook_execution_callback callback) {

@@ -171,6 +171,7 @@ int default_command_count = sizeof(default_commands) / sizeof(debugger_command_t
 int breakpoint(void *data, uint16_t address) {
 	asic_t *asic = data;
 	asic->stopped = 1;
+	return 1;
 }
 
 debugger_t *init_debugger(asic_t *asic) {

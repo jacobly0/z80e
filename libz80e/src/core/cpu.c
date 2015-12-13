@@ -897,9 +897,10 @@ void handle_interrupt(struct ExecutionContext *context) {
 }
 
 int cpu_execute(z80cpu_t *cpu, int cycles) {
+	int target = 0;
 	struct ExecutionContext context = {0};
 	context.cpu = cpu;
-	while (cycles > 0 || cpu->prefix != 0) {
+	while (cycles > target || cpu->prefix != 0) {
 		context.cycles = 0;
 		if (cpu->IFF2 && !cpu->prefix) {
 			if (cpu->IFF_wait) {
@@ -1151,6 +1152,7 @@ int cpu_execute(z80cpu_t *cpu, int cycles) {
 			default: // NONI (invalid instruction)
 				if (!context.opcode) {
 					hook_on_breakpoint(cpu->hook, r->PC);
+					target = cycles;
 				}
 				context.cycles += 4;
 				cpu->IFF_wait = 1;

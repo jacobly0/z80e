@@ -39,7 +39,7 @@ int hook_add_register_write(hook_info_t *, registers flags, void *data, hook_reg
 
 void hook_on_before_execution(hook_info_t *, uint16_t address);
 void hook_on_after_execution(hook_info_t *, uint16_t address);
-void hook_on_breakpoint(hook_info_t *, uint16_t address);
+int hook_on_breakpoint(hook_info_t *, uint16_t address);
 
 typedef void (*hook_execution_callback)(void *data, uint16_t address);
 
