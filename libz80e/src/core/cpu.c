@@ -1149,6 +1149,9 @@ int cpu_execute(z80cpu_t *cpu, int cycles) {
 				}
 				break;
 			default: // NONI (invalid instruction)
+				if (!context.opcode) {
+					hook_on_breakpoint(cpu->hook, r->PC);
+				}
 				context.cycles += 4;
 				cpu->IFF_wait = 1;
 				break;

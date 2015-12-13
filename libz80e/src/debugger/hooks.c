@@ -48,6 +48,17 @@ typedef struct {
 
 typedef struct {
 	void *data;
+	hook_breakpoint_callback callback;
+	int flags;
+} breakpoint_hook_callback_t;
+
+typedef struct {
+	int capacity;
+	breakpoint_hook_callback_t *callbacks;
+} hook_breakpoint_array_t;
+
+typedef struct {
+	void *data;
 	hook_lcd_update_callback callback;
 	int flags;
 } lcd_update_callback_t;
@@ -69,6 +80,7 @@ struct hook_info {
 
 	hook_execution_array_t *on_before_execution;
 	hook_execution_array_t *on_after_execution;
+	hook_breakpoint_array_t *on_breakpoint;
 
 	hook_lcd_update_array_t *on_lcd_update;
 };
@@ -104,6 +116,10 @@ hook_info_t *create_hook_set(asic_t *asic) {
 	info->on_after_execution = malloc(sizeof(hook_execution_array_t));
 	info->on_after_execution->capacity = 10;
 	info->on_after_execution->callbacks = calloc(10, sizeof(execution_hook_callback_t));
+
+	info->on_breakpoint = malloc(sizeof(hook_breakpoint_array_t));
+	info->on_breakpoint->capacity = 10;
+	info->on_breakpoint->callbacks = calloc(10, sizeof(breakpoint_hook_callback_t));
 
 	info->on_lcd_update = malloc(sizeof(hook_lcd_update_array_t));
 	info->on_lcd_update->capacity = 10;
@@ -267,6 +283,16 @@ void hook_on_after_execution(hook_info_t *info, uint16_t address) {
 	}
 }
 
+void hook_on_breakpoint(hook_info_t *info, uint16_t address) {
+	int i = 0;
+	for (i = 0; i < info->on_breakpoint->capacity; i++) {
+		execution_hook_callback_t *cb = &info->on_breakpoint->callbacks[i];
+		if (cb->flags & IN_USE) {
+			cb->callback(cb->data, address);
+		}
+	}
+}
+
 int hook_add_to_execution_array(hook_execution_array_t *hook, void *data, hook_execution_callback callback) {
 	int x = 0;
 
@@ -309,6 +335,42 @@ void hook_remove_after_execution(hook_info_t *info, int index) {
 
 int hook_add_after_execution(hook_info_t *info, void *data, hook_execution_callback callback) {
 	return hook_add_to_execution_array(info->on_after_execution, data, callback);
+}
+
+int hook_add_to_breakpoint_array(hook_breakpoint_array_t *hook, void *data, hook_breakpoint_callback callback) {
+	int x = 0;
+
+	for (; x < hook->capacity; x++) {
+		if (!(hook->callbacks[x].flags & IN_USE)) {
+			break;
+		}
+
+		if (x == hook->capacity - 1) {
+			hook->capacity += 10;
+			void *n = realloc(hook->callbacks, sizeof(breakpoint_hook_callback_t) * hook->capacity);
+			if (n == NULL) {
+				return -1;
+			}
+
+			hook->callbacks = n;
+			memset(n, 0, sizeof(breakpoint_hook_callback_t) * 10);
+		}
+	}
+	breakpoint_hook_callback_t *cb = &hook->callbacks[x];
+
+	cb->data = data;
+	cb->callback = callback;
+	cb->flags = IN_USE;
+
+	return x;
+}
+
+void hook_remove_breakpoint(hook_info_t *info, int index) {
+	info->on_breakpoint->callbacks[index].flags &= ~IN_USE;
+}
+
+int hook_add_breakpoint(hook_info_t *info, void *data, hook_breakpoint_callback callback) {
+	return hook_add_to_breakpoint_array(info->on_breakpoint, data, callback);
 }
 
 void hook_on_lcd_update(hook_info_t *info, ti_bw_lcd_t *lcd) {

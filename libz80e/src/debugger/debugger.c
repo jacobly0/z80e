@@ -1,5 +1,6 @@
 #include "debugger/commands.h"
 #include "debugger/debugger.h"
+#include "debugger/hooks.h"
 #include "log/log.h"
 
 #include <limits.h>
@@ -167,6 +168,11 @@ debugger_command_t default_commands[] = {
 
 int default_command_count = sizeof(default_commands) / sizeof(debugger_command_t);
 
+int breakpoint(void *data, uint16_t address) {
+	asic_t *asic = data;
+	asic->stopped = 1;
+}
+
 debugger_t *init_debugger(asic_t *asic) {
 	debugger_t *debugger = calloc(1, sizeof(debugger_t));
 
@@ -179,6 +185,8 @@ debugger_t *init_debugger(asic_t *asic) {
 	}
 
 	debugger->asic = asic;
+
+	hook_add_breakpoint(asic->hook, asic, breakpoint);
 
 	return debugger;
 }

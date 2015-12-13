@@ -39,6 +39,7 @@ int hook_add_register_write(hook_info_t *, registers flags, void *data, hook_reg
 
 void hook_on_before_execution(hook_info_t *, uint16_t address);
 void hook_on_after_execution(hook_info_t *, uint16_t address);
+void hook_on_breakpoint(hook_info_t *, uint16_t address);
 
 typedef void (*hook_execution_callback)(void *data, uint16_t address);
 
@@ -46,6 +47,11 @@ void hook_remove_before_execution(hook_info_t *, int);
 int hook_add_before_execution(hook_info_t *, void *data, hook_execution_callback);
 void hook_remove_after_execution(hook_info_t *, int);
 int hook_add_after_execution(hook_info_t *, void *data, hook_execution_callback);
+
+typedef int (*hook_breakpoint_callback)(void *data, uint16_t address);
+
+void hook_remove_breakpoint(hook_info_t *, int);
+int hook_add_breakpoint(hook_info_t *, void *data, hook_breakpoint_callback);
 
 // LCD hook
 
